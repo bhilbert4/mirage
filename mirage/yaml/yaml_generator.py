@@ -120,9 +120,10 @@ class SimInput:
         self.filter_throughput = 'config'
         self.observation_table = None
         self.use_JWST_pipeline = True
-        self.use_linearized_darks = False
+        self.use_linearized_darks = True
         self.simdata_output_dir = './'
         self.psfwfe = 'predicted'
+        self.background_rate = 'low'
         self.psfwfegroup = 0
         self.resets_bet_ints = 1  # NIRCam should be 1
         self.tracking = 'sidereal'
@@ -323,7 +324,7 @@ class SimInput:
         self.info['use_JWST_pipeline'] = [self.use_JWST_pipeline] * len(darks)
 
         # add background rate to the table
-        # self.info['bkgdrate'] = np.array([self.bkgdrate]*len(self.info['Mode']))
+        self.info['bkgdrate'] = np.array([self.background_rate]*len(self.info['Mode']))
 
         # grism entries
         grism_source_image = ['False'] * len(self.info['Mode'])
@@ -1134,7 +1135,7 @@ class SimInput:
                 MovingTargetExtended = input['{}_movext'.format(catkey)]
                 MovingTargetConvolveExtended = input['{}_movconv'.format(catkey)]
                 MovingTargetToTrack = input['{}_solarsys'.format(catkey)]
-                BackgroundRate = input['{}_bkgd'.format(catkey)]
+                #BackgroundRate = input['{}_bkgd'.format(catkey)]
             elif instrument.lower() == 'niriss':
                 PointSourceCatalog = input['PointSourceCatalog']
                 GalaxyCatalog = input['GalaxyCatalog']
@@ -1146,7 +1147,7 @@ class SimInput:
                 MovingTargetExtended = input['MovingTargetExtended']
                 MovingTargetConvolveExtended = input['MovingTargetConvolveExtended']
                 MovingTargetToTrack = input['MovingTargetToTrack']
-                BackgroundRate = input['BackgroundRate']
+                #BackgroundRate = input['BackgroundRate']
 
             f.write(('  pointsource: {}   #File containing a list of point sources to add (x, y locations and magnitudes)\n'
                      .format(PointSourceCatalog)))
@@ -1180,7 +1181,7 @@ class SimInput:
             f.write('  scattered:  None                          #Scattered light count rate image file\n')
             f.write('  scatteredscale: 1.0                        #Scattered light scaling factor\n')
             f.write(('  bkgdrate: {}                         #Constant background count rate (ADU/sec/pixel) or '
-                     '"high","medium","low" similar to what is used in the ETC\n'.format(BackgroundRate)))
+                     '"high","medium","low" similar to what is used in the ETC\n'.format(input['bkgdrate'])))
             f.write(('  poissonseed: {}                  #Random number generator seed for Poisson simulation)\n'
                      .format(np.random.randint(1, 2**32-2))))
             f.write('  photonyield: True                         #Apply photon yield in simulation\n')
