@@ -298,6 +298,27 @@ def parse_RA_Dec(ra_string, dec_string):
         raise ValueError("Error parsing RA, Dec strings: {} {}".format(ra_string, dec_string))
 
 
+def read_parameter_file(paramfile):
+    """Read in the main simualtion yaml parameter file
+    used by Mirage
+
+    Parameters
+    ----------
+    paramfile : str
+        Name of yaml file to read in
+
+    Returns
+    -------
+    params : dict
+        Dictionary containing entries from parameter file
+    """
+    try:
+        with open(paramfile, 'r') as infile:
+            params = yaml.load(infile)
+    except:
+        raise ValueError("Unable to read {}".format(paramfile))
+
+
 def read_subarray_definition_file(filename):
     """Read in the file that contains a list of subarray names and related information
 
