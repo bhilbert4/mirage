@@ -116,8 +116,15 @@ def nonLinDeriv(image,coeffs,limits):
     if len(image.shape) == 3:
         bady = 1
         badx = 2
+    elif len(image.shape) == 4:
+        bady = 2
+        badx = 3
 
     bad = np.where(values > limits)
+    print('VALUES shape', values.shape)
+    print('LIMITS shape', limits.shape)
+    print('Length of bad: {}'.format(len(bad[0])))
+    print('bad: {}'.format(bad))
     values[bad] = limits[bad[bady],bad[badx]]
     ncoeff = coeffs.shape[0]
     t = (ncoeff-1) * np.copy(coeffs[-1,:,:])

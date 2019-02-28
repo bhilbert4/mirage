@@ -411,6 +411,8 @@ class Observation():
         """
         rampdim = ramp.shape
         sbrefdim = sbref.shape
+        print('in add_superbias: {}, {}'.format(len(rampdim), len(sbrefdim)))
+        #print(sbref[0,:,0,0])
         if len(rampdim) != len(sbrefdim):
             if len(rampdim) == (len(sbrefdim) + 1):
                 newramp = ramp + sbref
@@ -523,6 +525,9 @@ class Observation():
             # the dark current groups.
             synthetic = synthetic + dark.data[:, 0:self.params['Readout']['ngroup'], :, :]
             reorder_sbandref = dark.sbAndRefpix
+
+
+        print('Synthetic + dark: {}'.format(synthetic[0,:,0,0]))
         return synthetic, zeroframe, reorder_sbandref
 
     def apply_lincoeff(self, data, cof):
@@ -972,9 +977,15 @@ class Observation():
         # All done in one function to save memory
         simexp, simzero = self.add_crs_and_noise(self.seed)
 
+        print(self.seed[0,0])
+        print('after crs: {}'.format(simexp[0,:,0,0]))
+
         # Multiply flat fields
         simexp = self.add_flatfield_effects(simexp)
         simzero = self.add_flatfield_effects(np.expand_dims(simzero, axis=1))[:, 0, :, :]
+
+
+        print('after flat field: {}'.format(simexp[0,:,0,0]))
 
         # Mask any reference pixels
         if self.params['Output']['grism_source_image'] is False:
@@ -986,6 +997,10 @@ class Observation():
             simexp = self.add_ipc(simexp)
             simzero = self.add_ipc(np.expand_dims(simzero, axis=1))[:, 0, :, :]
 
+        print('after ipc: {}'.format(simexp[0,:,0,0]))
+
+        print('dark is: {}'.format(self.linDark.data[0,:,0,0]))
+
         # Add the simulated source ramp to the dark ramp
         lin_outramp, lin_zeroframe, lin_sbAndRefpix = self.add_synthetic_to_dark(simexp,
                                                                                  self.linDark,
@@ -994,6 +1009,8 @@ class Observation():
         # Add other detector effects (Crosstalk/PAM)
         lin_outramp = self.add_detector_effects(lin_outramp)
         lin_zeroframe = self.add_detector_effects(np.expand_dims(lin_zeroframe, axis=1))[:, 0, :, :]
+
+        print('lin_outramp is: {}'.format(lin_outramp[0,:,0,0]))
 
         # Read in non-linearity correction coefficients. We need these
         # regardless of whether we are saving the linearized data or going
@@ -1091,9 +1108,15 @@ class Observation():
                                                         accuracy=self.params['nonlin']['accuracy'],
                                                         save_accuracy_map=False)
 
+                print('raw_outramp is {}'.format(raw_outramp[0,:,0,0]))
+
+
                 # Add the superbias and reference pixel signal back in
                 raw_outramp = self.add_superbias_and_refpix(raw_outramp, lin_sbAndRefpix)
                 raw_zeroframe = self.add_superbias_and_refpix(raw_zeroframe, self.linDark.zero_sbAndRefpix)
+
+                print('added superbias: {}'.format(raw_outramp[0,:,0,0]))
+
 
                 # Make sure all signals are < 65535
                 raw_outramp[raw_outramp > 65535] = 65535

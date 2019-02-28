@@ -1167,6 +1167,10 @@ class Catalog_seed():
             # translation coefficients
             pixel_x, pixel_y = self.RADecToXY_astrometric(ra_number, dec_number)
 
+            print('Input RA, dec and returned x, y:')
+            print(ra_number, dec_number)
+            print(pixel_x, pixel_y)
+
         else:
             # Case where the point source list entry locations are given in units of pixels
             # In this case we have the source position, and RA/Dec are calculated only so
@@ -2046,6 +2050,10 @@ class Catalog_seed():
             # Subtract 1 from SAIF-derived results since SIAF works in a 1-indexed coord system
             pixelx -= 1
             pixely -= 1
+
+
+            print('Input RA, Dec: {}, {}'.format(ra, dec))
+            print('Output x, y: {}, {}'.format(pixelx, pixely))
         return pixelx, pixely
 
     def object_separation(self, radec1, radec2, wcs):

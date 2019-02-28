@@ -114,10 +114,10 @@ class DarkPrep():
                    .format(self.params['Readout']['readpatt'])))
             maxgroups = 10
 
-        if (self.params['Readout']['ngroup'] > maxgroups):
-            print(("WARNING: {} is limited to a maximum of {} groups. Proceeding with ngroup = {}."
-                   .format(self.params['Readout']['readpatt'], maxgroups, maxgroups)))
-            self.params['Readout']['readpatt'] = maxgroups
+        #if (self.params['Readout']['ngroup'] > maxgroups):
+        #    print(("WARNING: {} is limited to a maximum of {} groups. Proceeding with ngroup = {}."
+        #           .format(self.params['Readout']['readpatt'], maxgroups, maxgroups)))
+        #    self.params['Readout']['readpatt'] = maxgroups
 
         # Check for entries in the parameter file that are None or blank,
         # indicating the step should be skipped. Create a dictionary of steps
@@ -336,21 +336,29 @@ class DarkPrep():
             # in the original dark, then make copies of the
             # entire thing as many times as necessary, adding
             # the signal from the previous final frame to each.
+            print('original data: {}'.format(obj.data[0, :, 15, 15]))
+
+
+
             for ints in range(div - 1):
                 extra_frames = np.copy(obj.data)
                 obj.data = np.hstack((obj.data, extra_frames + obj.data[:, -1, :, :]))
+                print('padded data: {}'.format(obj.data[0, :, 15, 15]))
                 if obj.sbAndRefpix is not None:
                     extra_sb = np.copy(obj.sbAndRefpix)
-                    obj.sbAndRefpix = np.hstack((obj.sbAndRefpix, extra_sb + obj.sbAndRefpix[:, -1, :, :]))
+                    #obj.sbAndRefpix = np.hstack((obj.sbAndRefpix, extra_sb + obj.sbAndRefpix[:, -1, :, :]))
+                    obj.sbAndRefpix = np.hstack((obj.sbAndRefpix, extra_sb))
 
             # At this point, if more frames are needed, but fewer
             # than an entire copy of self.dark.data, then add the
             # appropriate number of frames here.
             extra_frames = np.copy(obj.data[:, 1:mod + 1, :, :]) - obj.data[:, 0, :, :]
             obj.data = np.hstack((obj.data, extra_frames + obj.data[:, -1, :, :]))
+            print('extra padded data: {}'.format(obj.data[0, :, 15, 15]))
             if obj.sbAndRefpix is not None:
                 extra_sb = np.copy(obj.sbAndRefpix[:, 1:mod + 1, :, :]) - obj.sbAndRefpix[:, 0, :, :]
-                obj.sbAndRefpix = np.hstack((obj.sbAndRefpix, extra_sb + obj.sbAndRefpix[:, -1, :, :]))
+                #obj.sbAndRefpix = np.hstack((obj.sbAndRefpix, extra_sb + obj.sbAndRefpix[:, -1, :, :]))
+                obj.sbAndRefpix = np.hstack((obj.sbAndRefpix, extra_sb))
 
         elif ngroup * (nskip + nframe) < inputframes:
             # If there are more frames in the dark than we'll need,
@@ -685,6 +693,26 @@ class DarkPrep():
             self.read_linear_dark()
             self.dark = self.linDark
 
+        # Crop the dark
+        if self.runStep['linearized_darkfile']:
+            # Crop the linearized dark to the requested
+            # subarray size
+            # THIS WILL CROP self.dark AS WELL SINCE
+            # self.linDark IS JUST A REFERENCE IN THE NON
+            # PIPELINE CASE!!
+            self.linDark = self.crop_dark(self.linDark)
+            print('THIS IS A QUICK FIX FOR MAKING TA DATA')
+            #if self.zeroModel.data is not None:
+            #    self.zeroModel = self.crop_dark(self.zeroModel)
+        else:
+            # Now crop self.linDark, self.dark, and zeroModel
+            # to requested subarray
+            print('THIS IS A QUICK FIX FOR MAKING TA DATA')
+            self.dark = self.crop_dark(self.dark)
+            #if self.zeroModel is not None:
+            #    self.zeroModel = self.crop_dark(self.zeroModel)
+
+
         # Make sure there is enough data (frames/groups)
         # in the input integration to produce
         # the proposed output integration
@@ -750,11 +778,11 @@ class DarkPrep():
 
             # Now crop self.linDark, self.dark, and zeroModel
             # to requested subarray
-            self.dark = self.crop_dark(self.dark)
-            self.linDark = self.crop_dark(self.linDark)
+            #self.dark = self.crop_dark(self.dark)
+            #self.linDark = self.crop_dark(self.linDark)
 
-            if self.zeroModel is not None:
-                self.zeroModel = self.crop_dark(self.zeroModel)
+            #if self.zeroModel is not None:
+            #    self.zeroModel = self.crop_dark(self.zeroModel)
 
         elif self.runStep['linearized_darkfile']:
             # If no pipeline is run
@@ -767,9 +795,9 @@ class DarkPrep():
             # THIS WILL CROP self.dark AS WELL SINCE
             # self.linDark IS JUST A REFERENCE IN THE NON
             # PIPELINE CASE!!
-            self.linDark = self.crop_dark(self.linDark)
-            if self.zeroModel.data is not None:
-                self.zeroModel = self.crop_dark(self.zeroModel)
+            #self.linDark = self.crop_dark(self.linDark)
+            #if self.zeroModel.data is not None:
+            #    self.zeroModel = self.crop_dark(self.zeroModel)
         else:
             raise NotImplementedError(("Mode not yet supported! Must use either: use_JWST_pipeline "
                                        "= True and a raw or linearized dark or supply a linearized dark. "
