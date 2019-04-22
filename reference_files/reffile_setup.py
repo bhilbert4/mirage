@@ -10,6 +10,8 @@ import shutil
 import tarfile
 import zipfile
 
+from mirage.utils.utils import ensure_dir_exists
+
 
 NIRCAM_REFFILES_URL = [('https://stsci.box.com/s/6eomezd68n3surgqut8if6gy8l6lf3xk', 'nircam_reference_files.tar.gz')]
 NIRISS_REFFILES_URL = [('https://stsci.box.com/s/evlv7vxszgmiff3zdmdxnol6u6h8pa9j', 'nircam_reference_files.tar.gz')]
@@ -113,7 +115,47 @@ NIRCAM_LINEARIZED_DARK_URLS = [('https://stsci.box.com/s/dchmjjmepngpdo4xrabk8d5
                                ('https://stsci.box.com/s/re2lt2feyvyypj8pjn47tug8qlk1hzfm', 'Linearized_Dark_and_SBRefpix_NRCNRCA2-DARK-60090235001_1_482_SE_2016-01-09T04h17m03_uncal.fits'),
                                ('https://stsci.box.com/s/fszoeeviszj91li1v9amcfce68g7f5hz', 'Linearized_Dark_and_SBRefpix_NRCNRCA2-DARK-60090635511_1_482_SE_2016-01-09T07h05m19_uncal.fits'),
                                ('https://stsci.box.com/s/3gukyemqcjcqnt39f7s2sxyjlzcr7mk3', 'Linearized_Dark_and_SBRefpix_NRCNRCA2-DARK-60091030561_1_482_SE_2016-01-09T11h03m17_uncal.fits'),
-                               ('https://stsci.box.com/s/via9puv3co1yeqg6vrqpsftxheer6m6d', 'Linearized_Dark_and_SBRefpix_NRCNRCA2-DARK-60091457131_1_482_SE_2016-01-09T15h50m45_uncal.fits')]
+                               ('https://stsci.box.com/s/via9puv3co1yeqg6vrqpsftxheer6m6d', 'Linearized_Dark_and_SBRefpix_NRCNRCA2-DARK-60091457131_1_482_SE_2016-01-09T15h50m45_uncal.fits'),
+                               ('https://stsci.box.com/s/cnjlguana504waizgw15ez19lfgx3mwo', 'Linearized_Dark_and_SBRefpix_NRCNRCA3-DARK-60082245481_1_483_SE_2016-01-09T00h04m26_uncal.fits'),
+                               ('https://stsci.box.com/s/2epggrnq3misb3zn8e7iys9sxxhgzrqt', 'Linearized_Dark_and_SBRefpix_NRCNRCA3-DARK-60090321241_1_483_SE_2016-01-09T04h17m10_uncal.fits'),
+                               ('https://stsci.box.com/s/3dpeo1kwn4orhpgxdybm3qo830rlcvm9', 'Linearized_Dark_and_SBRefpix_NRCNRCA3-DARK-60090656591_1_483_SE_2016-01-09T07h31m27_uncal.fits'),
+                               ('https://stsci.box.com/s/7nin41qwumemceb6ma3xurqycg4dde1w', 'Linearized_Dark_and_SBRefpix_NRCNRCA3-DARK-60091052561_1_483_SE_2016-01-09T11h28m06_uncal.fits'),
+                               ('https://stsci.box.com/s/6yt605vznl90sjo41ny8lgwtdyhxzpu7', 'Linearized_Dark_and_SBRefpix_NRCNRCA3-DARK-60091522581_1_483_SE_2016-01-09T16h30m34_uncal.fits'),
+                               ('https://stsci.box.com/s/5abqwlhau5cvgqtf7kinpgstqwx5tf7d', 'Linearized_Dark_and_SBRefpix_NRCNRCA4-DARK-60082307391_1_484_SE_2016-01-09T00h04m08_uncal.fits'),
+                               ('https://stsci.box.com/s/1h86n0fcnmex8cfrjsl56hzdcjkbqaox', 'Linearized_Dark_and_SBRefpix_NRCNRCA4-DARK-60090259591_1_484_SE_2016-01-09T04h16m50_uncal.fits'),
+                               ('https://stsci.box.com/s/wttboeuk25eaxovslkm1psckitmtdeuh', 'Linearized_Dark_and_SBRefpix_NRCNRCA4-DARK-60090720041_1_484_SE_2016-01-09T07h58m26_uncal.fits'),
+                               ('https://stsci.box.com/s/acspa28skwaagjje74sairln2k61s37l', 'Linearized_Dark_and_SBRefpix_NRCNRCA4-DARK-60091117441_1_484_SE_2016-01-09T11h52m23_uncal.fits'),
+                               ('https://stsci.box.com/s/l9171f1e8x3g8ichtu3w6gze6g8oo7ik', 'Linearized_Dark_and_SBRefpix_NRCNRCA4-DARK-60091548131_1_484_SE_2016-01-09T16h30m50_uncal.fits'),
+                               ('https://stsci.box.com/s/8vrtbwiquazo3v0gis2ibd677ro5jw75', 'Linearized_Dark_and_SBRefpix_NRCNRCALONG-DARK-60082329041_1_485_SE_2016-01-09T00h04m16_uncal.fits'),
+                               ('https://stsci.box.com/s/mk15yiw25jc6ucsg8f8hl9xya55wvcqz', 'Linearized_Dark_and_SBRefpix_NRCNRCALONG-DARK-60090344021_1_485_SE_2016-01-09T04h16m42_uncal.fits'),
+                               ('https://stsci.box.com/s/f8ikd8ursxxmizh5i88rzz1frvg7n002', 'Linearized_Dark_and_SBRefpix_NRCNRCALONG-DARK-60090746381_1_485_SE_2016-01-09T08h21m48_uncal.fits'),
+                               ('https://stsci.box.com/s/7zzdnsgrg5kddp067hv6umpztbzido1s', 'Linearized_Dark_and_SBRefpix_NRCNRCALONG-DARK-60091140151_1_485_SE_2016-01-09T14h23m49_uncal.fits'),
+                               ('https://stsci.box.com/s/2djmrufvnbu014i1uilyphqbogcplj03', 'Linearized_Dark_and_SBRefpix_NRCNRCALONG-DARK-60091611271_1_485_SE_2016-01-09T17h16m35_uncal.fits'),
+                               ('https://stsci.box.com/s/bebwkwderw0y4qhg342z5joyvbm3ddmu', 'Linearized_Dark_and_SBRefpix_NRCNRCB1-DARK-60082356471_1_486_SE_2016-01-09T02h47m00_uncal.fits'),
+                               ('https://stsci.box.com/s/kbicf1i4lp4lv951lakxn7i5mak40jg2', 'Linearized_Dark_and_SBRefpix_NRCNRCB1-DARK-60090405201_1_486_SE_2016-01-09T05h33m56_uncal.fits'),
+                               ('https://stsci.box.com/s/f7egrgol987bkev77cy5c63ljy4r0hv5', 'Linearized_Dark_and_SBRefpix_NRCNRCB1-DARK-60090807581_1_486_SE_2016-01-09T08h48m11_uncal.fits'),
+                               ('https://stsci.box.com/s/ba0lgcegd8h3xormuc41wle2i4fr1p1e', 'Linearized_Dark_and_SBRefpix_NRCNRCB1-DARK-60091205311_1_486_SE_2016-01-09T14h30m08_uncal.fits'),
+                               ('https://stsci.box.com/s/44chr1i2gyojtke34pboj7nyfh2mtmne', 'Linearized_Dark_and_SBRefpix_NRCNRCB1-DARK-60091636021_1_486_SE_2016-01-09T17h16m13_uncal.fits'),
+                               ('https://stsci.box.com/s/8f01ir2s6lt6itisoypw3t2owvyajwno', 'Linearized_Dark_and_SBRefpix_NRCNRCB2-DARK-60090021181_1_487_SE_2016-01-09T02h51m54_uncal.fits'),
+                               ('https://stsci.box.com/s/isrohgs3ekpt9a2qubojqwgt2vkefyxa', 'Linearized_Dark_and_SBRefpix_NRCNRCB2-DARK-60090427541_1_487_SE_2016-01-09T05h33m14_uncal.fits'),
+                               ('https://stsci.box.com/s/vh5pv2as2nfzh3rgutuwdr9kw4iz0kwt', 'Linearized_Dark_and_SBRefpix_NRCNRCB2-DARK-60090830131_1_487_SE_2016-01-09T08h59m50_uncal.fits'),
+                               ('https://stsci.box.com/s/p6ibgezka3vkvr5bsjv52xlvius925ff', 'Linearized_Dark_and_SBRefpix_NRCNRCB2-DARK-60091230011_1_487_SE_2016-01-09T14h23m47_uncal.fits'),
+                               ('https://stsci.box.com/s/n94tmd71cgabs3dswsdodj1p65uwz0cw', 'Linearized_Dark_and_SBRefpix_NRCNRCB2-DARK-60091735131_1_487_SE_2016-01-09T18h09m45_uncal.fits'),
+                               ('https://stsci.box.com/s/sb1xugk7cdq6zhqkb65ifbl5y1h3l8ob', 'Linearized_Dark_and_SBRefpix_NRCNRCB3-DARK-60090043151_1_488_SE_2016-01-09T02h53m21_uncal.fits'),
+                               ('https://stsci.box.com/s/m5zqf0fqq5ycw9n0v5vageukk1v4wl9j', 'Linearized_Dark_and_SBRefpix_NRCNRCB3-DARK-60090451471_1_488_SE_2016-01-09T05h33m25_uncal.fits'),
+                               ('https://stsci.box.com/s/gqkru1s8zwvrps3l4t31d1prk6f5r2b9', 'Linearized_Dark_and_SBRefpix_NRCNRCB3-DARK-60090852451_1_488_SE_2016-01-09T09h35m03_uncal.fits'),
+                               ('https://stsci.box.com/s/upk0cqi9aqivj300ui2s8non2a5u3jlb', 'Linearized_Dark_and_SBRefpix_NRCNRCB3-DARK-60091254111_1_488_SE_2016-01-09T14h23m58_uncal.fits'),
+                               ('https://stsci.box.com/s/lh7595afpjqvriwaajrqd9sm3i54zxhl', 'Linearized_Dark_and_SBRefpix_NRCNRCB3-DARK-60091757401_1_488_SE_2016-01-09T18h40m55_uncal.fits'),
+                               ('https://stsci.box.com/s/pmmr6ozzxo4zgbxv7oqwg1xbyrze67mu', 'Linearized_Dark_and_SBRefpix_NRCNRCB4-DARK-60090118261_1_489_SE_2016-01-09T02h46m53_uncal.fits'),
+                               ('https://stsci.box.com/s/nrui4vu3jgptopw812mgjf0pxjnjh95k', 'Linearized_Dark_and_SBRefpix_NRCNRCB4-DARK-60090513431_1_489_SE_2016-01-09T05h57m50_uncal.fits'),
+                               ('https://stsci.box.com/s/faxxltcjpm45g2fugvd8ewu4kodm8a3z', 'Linearized_Dark_and_SBRefpix_NRCNRCB4-DARK-60090914351_1_489_SE_2016-01-09T09h52m02_uncal.fits'),
+                               ('https://stsci.box.com/s/ll9n77ca9i8dz7ae41b9ae4hc1jlh5x6', 'Linearized_Dark_and_SBRefpix_NRCNRCB4-DARK-60091316411_1_489_SE_2016-01-09T14h23m38_uncal.fits'),
+                               ('https://stsci.box.com/s/59u1h4sxthx2brm6ukaacbbcpa36wuhm', 'Linearized_Dark_and_SBRefpix_NRCNRCB4-DARK-60091822061_1_489_SE_2016-01-09T18h53m02_uncal.fits'),
+                               ('https://stsci.box.com/s/mhy8m4sdhcfv4t5bkqbtn0sr8lzplsxo', 'Linearized_Dark_and_SBRefpix_NRCNRCBLONG-DARK-60090141241_1_490_SE_2016-01-09T02h46m50_uncal.fits'),
+                               ('https://stsci.box.com/s/1t03er9udcj0fjacx1huhyx5qj8chjzv', 'Linearized_Dark_and_SBRefpix_NRCNRCBLONG-DARK-60090535381_1_490_SE_2016-01-09T06h17m51_uncal.fits'),
+                               ('https://stsci.box.com/s/qmssc39jl1wm3bv2biiawha67xc17eiv', 'Linearized_Dark_and_SBRefpix_NRCNRCBLONG-DARK-60090939281_1_490_SE_2016-01-09T10h22m25_uncal.fits'),
+                               ('https://stsci.box.com/s/q0sbu5lekvl1gk5u9wrvkhm3e74m7vfq', 'Linearized_Dark_and_SBRefpix_NRCNRCBLONG-DARK-60091338491_1_490_SE_2016-01-09T15h46m43_uncal.fits'),
+                               ('https://stsci.box.com/s/0hf9nopvq0vk16oselokbnqo80wmf788', 'Linearized_Dark_and_SBRefpix_NRCNRCBLONG-DARK-60101408431_1_490_SE_2016-01-10T15h01m09_uncal.fits')]
 
 NIRISS_RAW_DARK_URLS = [('https://stsci.box.com/s/1pr9cfwx2d8r6iju9afmhsylowtwq3x4', 'NISNIRISSDARK-153451235_11_496_SE_2015-12-11T16h05m20_dms_uncal.fits'),
                         ('https://stsci.box.com/s/cbnz7he6l9nva1lhrmn8pvz42hfb2ke5', 'NISNIRISSDARK-153451235_12_496_SE_2015-12-11T16h23m51_dms_uncal.fits'),
@@ -249,6 +291,7 @@ def download_reffiles(directory, instrument='all', psf_version='gridded', dark_t
                 det_str = filename.split('NRCNRC')[1].split('-')[0]
                 if 'LONG' in det_str:
                     det_str.replace('LONG', '5')
+                darks_dir = os.path.join(directory, 'mirage_data', 'nircam', 'darks')
                 sub_directory = os.path.join(directory, 'mirage_data', 'nircam', 'darks', cal, det_str)
             elif 'niriss' in filename.lower():
                 sub_directory = os.path.join(directory, 'mirage_data', 'niriss', 'darks', cal)
@@ -256,8 +299,9 @@ def download_reffiles(directory, instrument='all', psf_version='gridded', dark_t
                 sub_directory = os.path.join(directory, 'mirage_data', 'niriss', 'darks', cal)
 
             # Create the directory if it does not yet exist
-            if not os.path.exists(sub_directory):
-                os.makedirs(sub_directory)
+            ensure_dir_exists(darks_dir)
+            ensure_dir_exists(os.path.join(darks_dir, cal))
+            ensure_dir_exists(sub_directory)
 
             final_location = os.path.join(sub_directory, filename)
 
