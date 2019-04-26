@@ -241,7 +241,7 @@ def download_file(url, file_name, output_directory='./'):
     return download_filename
 
 
-def download_reffiles(directory, instrument='all', psf_version='gridded', dark_type='linearized'):
+def download_reffiles(directory, instrument='all', psf_version='subpix', dark_type='linearized'):
     """Download tarred and gzipped reference files. Expand, unzip and
     organize into the necessary directory structure such that Mirage
     can use them.
