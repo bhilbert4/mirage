@@ -14,7 +14,7 @@ from mirage.utils.utils import ensure_dir_exists
 
 
 NIRCAM_REFFILES_URL = [('https://stsci.box.com/s/6eomezd68n3surgqut8if6gy8l6lf3xk', 'nircam_reference_files.tar.gz')]
-NIRISS_REFFILES_URL = [('https://stsci.box.com/s/evlv7vxszgmiff3zdmdxnol6u6h8pa9j', 'nircam_reference_files.tar.gz')]
+NIRISS_REFFILES_URL = [('https://stsci.box.com/s/evlv7vxszgmiff3zdmdxnol6u6h8pa9j', 'niriss_reference_files.tar.gz')]
 FGS_REFFILES_URL = [('https://stsci.box.com/s/ia5z21m69tb08hd5zpv01c43g0px3gfm', 'fgs_reference_files.tar.gz')]
 
 NIRCAM_CR_LIBRARY_URL = [('https://stsci.box.com/s/4cw7wmsqw9qhdozl4owz0tmr6ozusfqr', 'mirage_nircam_cr_library.tar.gz')]
@@ -198,6 +198,11 @@ NIRISS_LINEARIZED_DARK_URLS = [('https://stsci.box.com/s/nte0e1k6mtmym50kqe5wlng
                                ('https://stsci.box.com/s/857olzwa1e51b05uz2bx6c13hzsufilz', 'Linearized_Dark_and_SBRefpix_NISNIRISSDARK-172500017_21_496_SE_2017-09-07T07h29m52_dms_uncal_linear_dark_prep_object.fits'),
                                ('https://stsci.box.com/s/isnevg8m2j58qrb72u19pp43k5rpksy1', 'Linearized_Dark_and_SBRefpix_NISNIRISSDARK-172500017_22_496_SE_2017-09-07T07h50m32_dms_uncal_linear_dark_prep_object.fits')]
 
+# For testing
+NIRISS_RAW_DARK_URLS = [('https://stsci.box.com/s/1pr9cfwx2d8r6iju9afmhsylowtwq3x4', 'NISNIRISSDARK-153451235_11_496_SE_2015-12-11T16h05m20_dms_uncal.fits')]
+NIRISS_LINEARIZED_DARK_URLS = [('https://stsci.box.com/s/nte0e1k6mtmym50kqe5wlngg6ambm6j2', 'Linearized_Dark_and_SBRefpix_NISNIRISSDARK-153451235_17_496_SE_2015-12-11T17h59m52_dms_uncal_linear_dark_prep_object.fits')]
+
+
 FGS_RAW_DARK_URLS = [('https://stsci.box.com/s/2nhm4pajg1d3b3vmj8p5wtsevxq41qsj', '29722_1x88_FGSF03512-D-NR-G2-5339214947_1_498_SE_2015-12-05T22h27m19_dms_uncal.fits'),
                      ('https://stsci.box.com/s/yq0pvyur651h8v1fz9t5wronvtbhv76b', '29782_1x88_FGSF03872-PAR-5340074326_1_498_SE_2015-12-06T12h22m47_dms_uncal.fits'),
                      ('https://stsci.box.com/s/72byn3psj6g3oawh3kp6fx5szfy1ahfs', '29813_1x88_FGSF037221-MR-2-5340161743_1_498_SE_2015-12-06T16h45m10_dms_uncal.fits'),
@@ -230,14 +235,14 @@ def download_file(url, file_name, output_directory='./'):
     download_filename : str
         Name of the downloaded file
     """
-    response = requests.get(url, stream=True)
-    if response.status_code != 200:
-        raise RuntimeError("Wrong URL - {}".format(url))
-    download_filename = os.path.join(output_directory, filename)
-    with open(download_filename, 'wb') as f:
-        for chunk in response.iter_content(chunk_size=1024):
-            if chunk:
-                f.write(chunk)
+    with requests.get(url, stream=True) as response:
+        if response.status_code != 200:
+            raise RuntimeError("Wrong URL - {}".format(url))
+        download_filename = os.path.join(output_directory, file_name)
+        with open(download_filename, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=2048):
+                if chunk:
+                    f.write(chunk)
     return download_filename
 
 
