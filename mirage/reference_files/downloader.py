@@ -8,7 +8,7 @@ import os
 import requests
 import shutil
 import tarfile
-import zipfile
+import gzip
 
 from mirage.utils.utils import ensure_dir_exists
 
@@ -236,14 +236,16 @@ def download_file(url, file_name, output_directory='./'):
     download_filename : str
         Name of the downloaded file
     """
-    with requests.get(url, stream=True) as response:
-        if response.status_code != 200:
-            raise RuntimeError("Wrong URL - {}".format(url))
-        download_filename = os.path.join(output_directory, file_name)
-        with open(download_filename, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=2048):
-                if chunk:
-                    f.write(chunk)
+    download_filename = os.path.join(output_directory, file_name)
+    if not os.path.isfile(download_filename):
+        print('Downloading: {}'.format(file_name))
+        with requests.get(url, stream=True) as response:
+            if response.status_code != 200:
+                raise RuntimeError("Wrong URL - {}".format(url))
+            with open(download_filename, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=2048):
+                    if chunk:
+                        f.write(chunk)
     return download_filename
 
 
@@ -274,16 +276,22 @@ def download_reffiles(directory, instrument='all', psf_version='subpix', dark_ty
     """
     file_list = get_file_list(instrument.lower(), psf_version.lower(), dark_type.lower())
 
+    # Download everything first
     for file_info in file_list:
         file_url, filename = file_info
-        print('Downloading: {}'.format(filename))
         download_file(file_url, filename, directory)
         local_file = os.path.join(directory, filename)
 
+    # Now untar/organize. This way if the download is interrupted, it can
+    # pixk up where it left off, since no downloaded files will have been
+    # moved yet.
+    for file_info in file_list:
+        file_url, filename = file_info
+        local_file = os.path.join(directory, filename)
         # Unzip and untar file
         if 'tar.gz' in local_file:
             print('Unzipping/extracting {}'.format(filename))
-            file_object = tarfile.open(name=local_file, mode='r:gz', )
+            file_object = tarfile.open(name=local_file, mode='r:gz')
             file_object.extractall(path=directory)
         else:
             # Darks need to be unzipped into the correct directory
@@ -298,11 +306,14 @@ def download_reffiles(directory, instrument='all', psf_version='subpix', dark_ty
                 if 'LONG' in det_str:
                     det_str.replace('LONG', '5')
                 darks_dir = os.path.join(directory, 'mirage_data', 'nircam', 'darks')
-                sub_directory = os.path.join(directory, 'mirage_data', 'nircam', 'darks', cal, det_str)
+                sub_directory = os.path.join(darks_dir, cal, det_str)
             elif 'niriss' in filename.lower():
-                sub_directory = os.path.join(directory, 'mirage_data', 'niriss', 'darks', cal)
+                darks_dir = os.path.join(directory, 'mirage_data', 'niriss', 'darks')
+                sub_directory = os.path.join(darks_dir, cal)
+                #sub_directory = os.path.join(directory, 'mirage_data', 'niriss', 'darks', cal)
             elif 'fgs' in filename:
-                sub_directory = os.path.join(directory, 'mirage_data', 'niriss', 'darks', cal)
+                darks_dir = os.path.join(directory, 'mirage_data', 'fgs', 'darks')
+                sub_directory = os.path.join(darks_dir, cal)
 
             # Create the directory if it does not yet exist
             ensure_dir_exists(darks_dir)
@@ -312,11 +323,15 @@ def download_reffiles(directory, instrument='all', psf_version='subpix', dark_ty
             final_location = os.path.join(sub_directory, filename)
 
             # Move the zipped file into the correct subdirectory
-            # and unzip
-            print('Moving {} to {}'.format(filename, sub_directory))
-            shutil.move(local_file, final_location)
-            print('Unzipping {}'.format(filename))
-            unzip_file(final_location, sub_directory)
+            if not os.path.isfile(final_location):
+                print('Moving {} to {}'.format(filename, sub_directory))
+                shutil.move(local_file, final_location)
+
+            # Unzip
+            unzipped_filename = final_location.replace('.gz', '')
+            if not os.path.isfile(unzipped_filename):
+                print('Unzipping {}'.format(filename))
+                unzip_file(final_location)
 
     print(('Mirage reference files downloaded and extracted. Before '
            'using Mirage, be sure to set the MIRAGE_DATA environment '
@@ -406,7 +421,7 @@ def get_file_list(instruments, library_version, dark_current):
     return urls
 
 
-def unzip_file(filename, dir_name):
+def unzip_file(filename):
     """Unzip a file
 
     Parameters
@@ -417,6 +432,9 @@ def unzip_file(filename, dir_name):
     dir_name : str
         Directory into which the file is unzipped
     """
-    zip_ref = zipfile.ZipFile(filename, 'r')
-    zip_ref.extractall(dir_name)
-    zip_ref.close()
+    if not os.path.isfile(filename):
+        print('File {} does not exist.'.format(filename))
+    with gzip.open(filename, 'rb') as file_in:
+        unzipped_name = filename.replace('.gz', '')
+        with open(unzipped_name, 'wb') as file_out:
+            shutil.copyfileobj(file_in, file_out)
