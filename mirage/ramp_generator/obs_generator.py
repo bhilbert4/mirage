@@ -40,14 +40,18 @@ import numpy as np
 from astropy.io import fits, ascii
 from astropy.table import Table
 from astropy.time import Time, TimeDelta
+import pysiaf
 
 from . import unlinearize
 from ..utils import read_fits, utils, siaf_interface
 from ..utils import set_telescope_pointing_separated as stp
+from mirage import version
+
+MIRAGE_VERSION = version.__version__
 
 INST_LIST = ['nircam', 'niriss', 'fgs']
 MODES = {"nircam": ["imaging", "ts_imaging", "wfss", "ts_wfss"],
-         "niriss": ["imaging", "ami", "pom"],
+         "niriss": ["imaging", "ami", "pom", "wfss"],
          "fgs": ["imaging"]}
 
 
@@ -361,6 +365,62 @@ class Observation():
                         temp[middle_j:middle_j + ny, middle_i:middle_i + nx]
                     output_data[integration, group, yoff:yoff + ny, xoff:xoff + nx] += part
         return output_data
+
+    def add_mirage_info(self):
+        """Place Mirage-related information in a FITS hdulist so that it can
+        be saved with the output data
+
+        Returns
+        -------
+        hdulist : astroy.io.fits.HDUList
+            HDU List containing Mirage-related info in the primary header
+        """
+        hdulist = fits.HDUList([fits.PrimaryHDU(), fits.ImageHDU()])
+        hdulist[0].header['MRGEVRSN'] = (MIRAGE_VERSION, 'Mirage version used')
+        hdulist[0].header['YAMLFILE'] = (self.paramfile, 'Mirage input yaml file')
+        hdulist[0].header['GAINFILE'] = (self.params['Reffiles']['gain'], 'Gain file used by Mirage')
+        hdulist[0].header['DISTORTN'] = (self.params['Reffiles']['astrometric'],
+                                         'Distortion reffile used by Mirage')
+        hdulist[0].header['IPC'] = (self.params['Reffiles']['ipc'], 'IPC kernel used by Mirage')
+        hdulist[0].header['PIXARMAP'] = (self.params['Reffiles']['pixelAreaMap'],
+                                         'Pixel area map used by Mirage')
+        hdulist[0].header['CROSSTLK'] = (self.params['Reffiles']['crosstalk'],
+                                         'Crosstalk file used by Mirage')
+        hdulist[0].header['FLUX_CAL'] = (self.params['Reffiles']['flux_cal'],
+                                         'Flux calibration file used by Mirage')
+        hdulist[0].header['FTHRUPUT'] = (self.params['Reffiles']['filter_throughput'],
+                                         'Filter throughput file used by Mirage')
+        hdulist[0].header['PTSRCCAT'] = (self.params['simSignals']['pointsource'],
+                                         'Point source catalog used by Mirage')
+        hdulist[0].header['GALAXCAT'] = (self.params['simSignals']['galaxyListFile'],
+                                         'Galaxy source catalog used by Mirage')
+        hdulist[0].header['EXTNDCAT'] = (self.params['simSignals']['extended'],
+                                         'Extended source catalog used by Mirage')
+        hdulist[0].header['MTPTSCAT'] = (self.params['simSignals']['movingTargetList'],
+                                         'Moving point source catalog used by Mirage')
+        hdulist[0].header['MTSERSIC'] = (self.params['simSignals']['movingTargetSersic'],
+                                         'Moving Sersic catalog used by Mirage')
+        hdulist[0].header['MTEXTEND'] = (self.params['simSignals']['movingTargetExtended'],
+                                         'Moving extended target catalog used by Mirage')
+        hdulist[0].header['NONSDRAL'] = (self.params['simSignals']['movingTargetToTrack'],
+                                         'Non-Sidereal catalog used by Mirage')
+        hdulist[0].header['BKGDRATE'] = (self.params['simSignals']['bkgdrate'],
+                                         'Background rate used by Mirage')
+        hdulist[0].header['TRACKING'] = (self.params['Telescope']['tracking'],
+                                         'Telescope tracking type for Mirage')
+        hdulist[0].header['POISSON'] = (self.params['simSignals']['poissonseed'],
+                                        'Random num generator seed for Poisson noise in Mirage')
+        hdulist[0].header['PSFWFE'] = (self.params['simSignals']['psfwfe'],
+                                       'WebbPSF Wavefront error used by Mirage')
+        hdulist[0].header['PSFWFGRP'] = (self.params['simSignals']['psfwfegroup'],
+                                         'WebbPSF wavefront error group used by Mirage')
+        hdulist[0].header['CRLIB'] = (self.params['cosmicRay']['library'],
+                                      'Cosmic ray library used by Mirage')
+        hdulist[0].header['CRSCALE'] = (self.params['cosmicRay']['scale'],
+                                        'Cosmic ray rate scaling factor used by Mirage')
+        hdulist[0].header['CRSEED'] = (self.params['cosmicRay']['seed'],
+                                       'Random number generator seed for cosmic rays in Mirage')
+        return hdulist
 
     def add_pam(self, signalramp):
         """ Apply Pixel Area Map to exposure
@@ -743,7 +803,8 @@ class Observation():
             self.ra, self.dec = utils.parse_RA_Dec(self.params['Telescope']['ra'],
                                                    self.params['Telescope']['dec'])
 
-        if abs(self.dec) > 90. or self.ra < 0. or self.ra > 360. or self.ra is None or self.dec is None:
+        #if abs(self.dec) > 90. or self.ra < 0. or self.ra > 360. or self.ra is None or self.dec is None:
+        if abs(self.dec) > 90. or self.ra is None or self.dec is None:
             raise ValueError("WARNING: bad requested RA and Dec {} {}".format(self.ra, self.dec))
 
         # Make sure the rotation angle is a float
@@ -1805,18 +1866,29 @@ class Observation():
 
     def get_cr_rate(self):
         """Get the base cosmic ray impact probability.
-        These numbers are from Kevin's original script. Not sure where
-        they come from or their units
+        
+        The following values are based on JWST-STScI-001928, "A library of simulated cosmic ray events impacting 
+        JWST HgCdTe detectors by Massimo Robberto", Table 1, times the pixel area of 18 microns square = 3.24e-06
+        square cm.  Values are in nucleon events per pixel per second.  Corresponding values from the report are
+        4.8983 nucleons/cm^2/second, 1.7783 nucleons/cm^2/second, and 3046.83 nucleons/cm^2/second.  The expected 
+        rates per full frame read (10.73677 seconds) over the whole set of 2048x2048 pixels are 715, 259, and 
+        444609 events respectively.
+        
+        Note that the SUNMIN rate is lower than the SUNMAX rate.  The MIN and MAX labels refer to the solar activity, 
+        and the galactic cosmic ray contribution at L2 is reduced at solar maximum compared to solar minimum.  The
+        FLARE case is for the largest solar flare event on record (see the Robberto report) and corresponds to conditions 
+        under which JWST would presumably not be operating. 
         """
         self.crrate = 0.
-        if "SUNMAX" in self.params["cosmicRay"]["library"]:
-            self.crrate = 1.6955e-04
+        # The previous values were per full frame read and there was a transcription issue in Volk's code.  These
+        # have been corrected.  Values are cosmic ray "hit" rates per pixel per second.
         if "SUNMIN" in self.params["cosmicRay"]["library"]:
-            self.crrate = 6.153e-05
+            self.crrate = 1.587e-05
+        if "SUNMAX" in self.params["cosmicRay"]["library"]:
+            self.crrate = 5.762e-06
         if "FLARES" in self.params["cosmicRay"]["library"]:
-            self.crrate = 0.10546
+            self.crrate = 0.0098729
 
-        self.crrate = self.crrate/self.frametime
         if self.crrate > 0.:
             print("Base cosmic ray probability per pixel per second: {}".format(self.crrate))
 
@@ -1939,17 +2011,18 @@ class Observation():
             newkernel = np.copy(kern)
             newkernel[:, :, ys:ye, xs:xe] = realout1
 
-        # Save the inverted kernel for future simulator runs
-        h0 = fits.PrimaryHDU()
-        h1 = fits.ImageHDU(newkernel)
-        h1.header["DETECTOR"] = self.detector
-        h1.header["INSTRUME"] = self.params["Inst"]["instrument"]
-        hlist = fits.HDUList([h0, h1])
-        indir, infile = os.path.split(self.params["Reffiles"]["ipc"])
-        outname = os.path.join(indir, "Kernel_to_add_IPC_effects_from_" + infile)
-        hlist.writeto(outname, overwrite=True)
-        print(("Inverted IPC kernel saved to {} for future simulator "
-               "runs.".format(outname)))
+        if self.params['Output']['save_intermediates']:
+            # Save the inverted kernel for future simulator runs
+            h0 = fits.PrimaryHDU()
+            h1 = fits.ImageHDU(newkernel)
+            h1.header["DETECTOR"] = self.detector
+            h1.header["INSTRUME"] = self.params["Inst"]["instrument"]
+            hlist = fits.HDUList([h0, h1])
+            indir, infile = os.path.split(self.params["Reffiles"]["ipc"])
+            outname = os.path.join(indir, "Kernel_to_add_IPC_effects_from_" + infile)
+            hlist.writeto(outname, overwrite=True)
+            print(("Inverted IPC kernel saved to {} for future simulator "
+                   "runs.".format(outname)))
         return newkernel
 
     def mask_refpix(self, ramp, zero):
@@ -2415,6 +2488,8 @@ class Observation():
         -------
         None
         """
+        extra_fits_hdulist = self.add_mirage_info()
+
         if mod == '1b':
             from jwst.datamodels import Level1bModel as DataModel
         elif mod == 'ramp':
@@ -2422,7 +2497,7 @@ class Observation():
         else:
             raise ValueError(("Model type to use for saving output is "
                               "not recognized. Must be either '1b' or 'ramp'."))
-        outModel = DataModel()
+        outModel = DataModel(extra_fits_hdulist)
 
         # make sure the ramp to be saved has the right number of dimensions
         imshape = ramp.shape
@@ -2456,7 +2531,8 @@ class Observation():
 
         exptype = {"nircam": {"imaging": "NRC_IMAGE", "ts_imaging": "NRC_TSIMAGE",
                               "wfss": "NRC_WFSS", "ts_wfss": "NRC_TSGRISM"},
-                   "niriss": {"imaging": "NIS_IMAGE", "ami": "NIS_IMAGE", "pom": "NIS_IMAGE"},
+                   "niriss": {"imaging": "NIS_IMAGE", "ami": "NIS_IMAGE", "pom": "NIS_IMAGE",
+                              "wfss": "NIS_WFSS"},
                    "fgs": {"imaging": "FGS_IMAGE"}}
 
         try:
@@ -2533,8 +2609,10 @@ class Observation():
         outModel.meta.target.dec = self.dec
 
         # ra_v1, dec_v1, and pa_v3 are not used by the level 2 pipelines
-        outModel.meta.pointing.ra_v1 = self.ra
-        outModel.meta.pointing.dec_v1 = self.dec
+        # compute pointing of V1 axis
+        pointing_ra_v1, pointing_dec_v1 = pysiaf.rotations.pointing(self.attitude_matrix, 0., 0.)
+        outModel.meta.pointing.ra_v1 = pointing_ra_v1
+        outModel.meta.pointing.dec_v1 = pointing_dec_v1
         outModel.meta.pointing.pa_v3 = self.params['Telescope']['rotation']
 
         ramptime = self.frametime * (1 + self.params['Readout']['ngroup'] *
@@ -2708,8 +2786,12 @@ class Observation():
         # gets reset to -1, which screws up saturation flagging
         # I think the answer is to save as uint16...
 
+        # Create HDU List of Mirage-centric info
+        extra_fits_hdulist = self.add_mirage_info()
+        extra_header0 = extra_fits_hdulist[0].header
+
         if mod == 'ramp':
-            ex0 = fits.PrimaryHDU()
+            ex0 = fits.PrimaryHDU(header=extra_header0)
             ex1 = fits.ImageHDU(ramp.astype(np.float32), name='SCI')
             ex2 = fits.ImageHDU(pixel_dq.astype(np.uint32), name='PIXELDQ')
             ex3 = fits.ImageHDU(group_dq.astype(np.uint8), name='GROUPDQ')
@@ -2720,7 +2802,7 @@ class Observation():
             groupextnum = 6
 
         elif mod == '1b':
-            ex0 = fits.PrimaryHDU()
+            ex0 = fits.PrimaryHDU(header=extra_header0)
             ex1 = fits.ImageHDU(ramp.astype(np.uint16), name='SCI')
             ex2 = fits.ImageHDU(zeroframe.astype(np.uint16), name='ZEROFRAME')
             ex3 = fits.BinTableHDU(name='GROUP')
@@ -2807,8 +2889,10 @@ class Observation():
         outModel[0].header['TARG_DEC'] = self.dec  # not correct
 
         # ra_v1, dec_v1, and pa_v3 are not used by the level 2 pipelines
-        outModel[0].header['RA_V1'] = self.ra
-        outModel[0].header['DEC_V1'] = self.dec
+        # compute pointing of V1 axis
+        pointing_ra_v1, pointing_dec_v1 = pysiaf.rotations.pointing(self.attitude_matrix, 0., 0.)
+        outModel[0].header['RA_V1'] = pointing_ra_v1
+        outModel[0].header['DEC_V1'] = pointing_dec_v1
         outModel[0].header['PA_V3'] = self.params['Telescope']['rotation']
 
         ramptime = self.frametime * (1 + self.params['Readout']['ngroup'] *
