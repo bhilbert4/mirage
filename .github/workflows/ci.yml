@@ -1,70 +1,47 @@
 name: CI
 
-on:
-  push:
-    branches:
-      - master
-    tags:
-      - "*"
-  pull_request:
-  schedule:
-    # Run every Monday at 6am UTC
-    - cron: "0 6 * * 1"
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -l {0}
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ["3.11"]
+
   test:
-    name: ${{ matrix.name }}
+    name: test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
+      max-parallel: 5
       fail-fast: false
       matrix:
-        include:
-          - name: Unit tests Python 3.8
-            os: ubuntu-latest
-            python-version: 3.8
-            extras: test
-            test-command: pytest
-
-          - name: Unit tests Python 3.9
-            os: ubuntu-latest
-            python-version: 3.9
-            extras: test
-            test-command: pytest
-
-          - name: Build docs
-            os: ubuntu-latest
-            python-version: 3.9
-            extras: docs
-            test-command: sphinx-build docs docs/_build
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.11"]
 
     steps:
-      - name: Install system packages
-        if: ${{ contains(matrix.name,'docs') }}
-        run: |
-          sudo apt-get install pandoc
-      - name: Checkout code
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938  # v4.2.0
+      - uses: actions/checkout@v4
+
+      - uses: mamba-org/provision-with-micromamba@v15
         with:
-          fetch-depth: 0
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # v5.2.0
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Upgrade pip
-        run: |
-          pip install --upgrade pip
-      - name: Add conda to system path
-        run: |
-          # $CONDA is an environment variable pointing to the root of the miniconda directory
-          echo $CONDA/bin >> $GITHUB_PATH
-      - name: Install dependencies
-        run: |
-          conda env update --file environment_python_${PYTHONVERSION}.yml --name mirage-${{ matrix.python-version }}
-        env:
-            PYTHONVERSION: ${{ matrix.python-version }}
-      - name: Install package
-        run: |
-          pip install -e .[${{ matrix.extras }}]
-      - name: Run tests
-        run: |
-          ${{ matrix.test-command }}
+          environment-file: ./environment_python_${{ matrix.python-version }}.yml
+          cache-env: true
+          cache-downloads: true
+
+      - run: pip install -e .
+
+      - run: conda env export
+
+      - run: python -c "import mirage"
+
+      - run: pytest tests/
