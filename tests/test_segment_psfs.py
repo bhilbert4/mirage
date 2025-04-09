@@ -264,7 +264,7 @@ def test_get_gridded_segment_psf_library_list_remote():
                                          library_path)
     assert len(libraries) == 18, 'Did not find all 18 segment libraries'
     for i, lib_model in enumerate(libraries):
-        assert isinstance(lib_model, photutils.psf.models.GriddedPSFModel), \
+        assert isinstance(lib_model, photutils.psf.GriddedPSFModel), \
             'Segment PSF library not created correctly'
         assert lib_model.grid_xypos == [(1023.5, 1023.5)], \
             'Segment PSF library not created correctly'
@@ -293,7 +293,7 @@ def test_get_gridded_segment_psf_library_list_local():
                                          library_path)
     assert len(libraries) == 18, 'Did not find all 18 segment libraries'
     for i, lib_model in enumerate(libraries):
-        assert isinstance(lib_model, photutils.psf.models.GriddedPSFModel), \
+        assert isinstance(lib_model, photutils.psf.GriddedPSFModel), \
             'Segment PSF library not created correctly'
         assert lib_model.grid_xypos == [(1023.0, 1023.0)], \
             'Segment PSF library not created correctly'
@@ -318,7 +318,7 @@ def test_to_gridded_psfmodel(test_library_file):
     with fits.open(test_library_file) as hdulist:
         lib_model = to_griddedpsfmodel(hdulist)
 
-    assert isinstance(lib_model, photutils.psf.models.GriddedPSFModel), \
+    assert isinstance(lib_model, photutils.psf.GriddedPSFModel), \
         'Segment PSF library not created correctly'
     assert lib_model.grid_xypos == [(1023.5, 1023.5)], \
         'Segment PSF library not created correctly'
