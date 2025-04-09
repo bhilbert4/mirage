@@ -266,9 +266,9 @@ def test_get_gridded_segment_psf_library_list_remote():
     for i, lib_model in enumerate(libraries):
         assert isinstance(lib_model, photutils.psf.GriddedPSFModel), \
             'Segment PSF library not created correctly'
-        assert lib_model.grid_xypos == [(1023.5, 1023.5)], \
+        assert np.all(lib_model.grid_xypos == [(1023.5, 1023.5)]), \
             'Segment PSF library not created correctly'
-        assert lib_model.oversampling == 1, \
+        assert np.all(lib_model.oversampling == [1, 1]), \
             'Segment PSF library not created correctly'
         for k in ['segid', 'segname', 'xtilt', 'ytilt']:
             assert k in list(lib_model.meta.keys()), \
@@ -295,9 +295,9 @@ def test_get_gridded_segment_psf_library_list_local():
     for i, lib_model in enumerate(libraries):
         assert isinstance(lib_model, photutils.psf.GriddedPSFModel), \
             'Segment PSF library not created correctly'
-        assert lib_model.grid_xypos == [(1023.0, 1023.0)], \
+        assert np.all(lib_model.grid_xypos == [(1023.0, 1023.0)]), \
             'Segment PSF library not created correctly'
-        assert lib_model.oversampling == 1, \
+        assert np.all(lib_model.oversampling == [1, 1]), \
             'Segment PSF library not created correctly'
         for k in ['segid', 'segname', 'xtilt', 'ytilt']:
             assert k in list(lib_model.meta.keys()), \
@@ -320,9 +320,9 @@ def test_to_gridded_psfmodel(test_library_file):
 
     assert isinstance(lib_model, photutils.psf.GriddedPSFModel), \
         'Segment PSF library not created correctly'
-    assert lib_model.grid_xypos == [(1023.5, 1023.5)], \
+    assert np.all(lib_model.grid_xypos == [(1023.5, 1023.5)]), \
         'Segment PSF library not created correctly'
-    assert lib_model.oversampling == 1, \
+    assert np.all(lib_model.oversampling == [1, 1]), \
         'Segment PSF library not created correctly'
     for k in ['segid', 'segname', 'xtilt', 'ytilt']:
         assert k in list(lib_model.meta.keys()), \
