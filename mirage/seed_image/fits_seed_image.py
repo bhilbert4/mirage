@@ -127,8 +127,8 @@ from astropy.io import fits, ascii
 import datetime
 from math import radians
 import numpy as np
-from photutils import detect_sources
-from photutils import TopHatWindow, TukeyWindow, CosineBellWindow, SplitCosineBellWindow, HanningWindow
+from photutils.segmentation  import detect_sources
+from photutils.psf import TopHatWindow, TukeyWindow, CosineBellWindow, SplitCosineBellWindow, HanningWindow
 from photutils.centroids import centroid_2dg
 from photutils.psf import resize_psf
 from photutils.psf.matching import create_matching_kernel
