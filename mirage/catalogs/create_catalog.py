@@ -470,7 +470,7 @@ def query_WISE_ptsrc_catalog(ra, dec, box_width, wise_catalog='ALLWISE'):
 
     ra_dec_string = "{}  {}".format(ra, dec)
     query_table = Irsa.query_region(ra_dec_string, catalog=search_cat, spatial='Box',
-                                    width=box_width * u.arcsec, selcols=cols)
+                                    width=box_width * u.arcsec, columns=cols)
 
     # Exclude any entries with missing RA or Dec values
     radec_mask = filter_bad_ra_dec(query_table)
@@ -1432,7 +1432,7 @@ def wise_crossmatch(gaia_cat, gaia_wise, gaia_wise_crossref, wise_cat, twomass_c
         if (d2d[loop].arcsec) < 0.4:
             matchwise[idx[loop]] = True
             for n2 in range(num_gaia):
-                if gaia_cat['designation'][n2] == gaia_wise_crossref['designation'][loop]:
+                if gaia_cat['DESIGNATION'][n2] == gaia_wise_crossref['designation'][loop]:
                     gaiawiseinds[idx[loop]] = n2
                     break
     return matchwise, gaiawiseinds, twomasswiseinds
