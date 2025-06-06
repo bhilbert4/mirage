@@ -166,8 +166,8 @@ def for_proposal(xml_filename, pointing_filename, point_source=True, extragalact
     ra_apertures = np.array(pointing_dictionary['ra_ref'] * u.deg)
     dec_apertures = np.array(pointing_dictionary['dec_ref'] * u.deg)
 
-    ra_targets = np.array([np.float(num) for num in pointing_dictionary['ra']] * u.deg)
-    dec_targets = np.array([np.float(num) for num in pointing_dictionary['dec']] * u.deg)
+    ra_targets = np.array([float(num) for num in pointing_dictionary['ra']] * u.deg)
+    dec_targets = np.array([float(num) for num in pointing_dictionary['dec']] * u.deg)
     mapped = np.array([False] * len(ra_targets))
     index = np.arange(len(ra_targets))
 
@@ -1432,7 +1432,7 @@ def wise_crossmatch(gaia_cat, gaia_wise, gaia_wise_crossref, wise_cat, twomass_c
         if (d2d[loop].arcsec) < 0.4:
             matchwise[idx[loop]] = True
             for n2 in range(num_gaia):
-                if gaia_cat['DESIGNATION'][n2] == gaia_wise_crossref['designation'][loop]:
+                if gaia_cat['designation'][n2] == gaia_wise_crossref['designation'][loop]:
                     gaiawiseinds[idx[loop]] = n2
                     break
     return matchwise, gaiawiseinds, twomasswiseinds
