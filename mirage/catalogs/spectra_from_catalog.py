@@ -23,9 +23,9 @@ Use
 """
 from collections import OrderedDict
 import copy
+import importlib.resources as resources
 import logging
 import os
-import pkg_resources
 
 from astropy.io import ascii
 import astropy.units as u
@@ -43,7 +43,7 @@ from mirage.utils.constants import FLAMBDA_CGS_UNITS, FNU_CGS_UNITS, MEAN_GAIN_V
 from mirage.utils.flux_cal import mag_col_name_to_filter_pupil
 from mirage.utils.utils import magnitude_to_countrate, get_filter_throughput_file, standardize_filters
 
-MODULE_PATH = pkg_resources.resource_filename('mirage', '')
+MODULE_PATH = str(resources.files('mirage'))
 CONFIG_PATH = os.path.join(MODULE_PATH, 'config')
 ZEROPOINT_FILES = {'niriss': os.path.join(CONFIG_PATH, 'niriss_zeropoints.list'),
                    'nircam': os.path.join(CONFIG_PATH, 'NIRCam_zeropoints.list'),

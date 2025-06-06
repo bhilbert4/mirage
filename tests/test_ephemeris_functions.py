@@ -12,13 +12,13 @@ Use
 """
 
 import datetime
+import importlib.resources as resources
 import numpy as np
 import os
-import pkg_resources
 
 from mirage.seed_image import ephemeris_tools
 
-package_path = pkg_resources.resource_filename('mirage', '')
+package_path = str(resources.files('mirage'))
 data_dir = os.path.join( os.path.dirname(__file__), 'test_data/ephemeris/')
 CONFIG_DIR = os.path.join(package_path, 'config')
 

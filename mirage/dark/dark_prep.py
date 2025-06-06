@@ -27,13 +27,13 @@ import sys
 import os
 import argparse
 import datetime
+import importlib.resources as resources
 import logging
 from math import floor
 from glob import glob
 import shutil
 
 import yaml
-import pkg_resources
 import numpy as np
 from astropy.io import fits, ascii
 import astropy.units as u
@@ -82,7 +82,7 @@ class DarkPrep():
 
         # Locate the module files, so that we know where to look
         # for config subdirectory
-        self.modpath = pkg_resources.resource_filename('mirage', '')
+        self.modpath = str(resources.files('mirage'))
 
         # Get the location of the MIRAGE_DATA environment
         # variable, so we know where to look for darks, CR,

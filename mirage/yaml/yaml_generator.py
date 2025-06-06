@@ -94,6 +94,7 @@ import sys
 import os
 import argparse
 from collections import Counter
+import importlib.resources as resources
 import logging
 from copy import deepcopy
 from glob import glob
@@ -103,7 +104,6 @@ from astropy.time import Time, TimeDelta
 from astropy.table import Table
 from astropy.io import ascii, fits
 import numpy as np
-import pkg_resources
 import pysiaf
 
 from ..apt import apt_inputs
@@ -332,7 +332,7 @@ class SimInput:
         self.crds_datadir = crds_tools.env_variables()
 
         # Get the path to the 'MIRAGE' package
-        self.modpath = pkg_resources.resource_filename('mirage', '')
+        self.modpath = str(resources.files('mirage'))
 
         self.config_information = utils.organize_config_files(offline=self.offline)
 

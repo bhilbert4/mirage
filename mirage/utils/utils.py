@@ -19,10 +19,10 @@ Dependencies
 """
 
 import copy
+import importlib.resources as resources
 import json
 import os
 import logging
-import pkg_resources
 import re
 import yaml
 
@@ -745,7 +745,7 @@ def get_filter_throughput_file(instrument, filter_name, pupil_name, nircam_modul
     throughput_file : str
         Name of ascii file containing the filter throughput curve
     """
-    modpath = pkg_resources.resource_filename('mirage', '')
+    modpath = str(resources.files('mirage'))
     config_path = os.path.join(modpath, 'config')
 
     instrument = instrument.lower()
@@ -1021,7 +1021,7 @@ def organize_config_files(offline=False):
         Mirage reference data. Used primarily for testing.
     """
     data_dir = expand_environment_variable('MIRAGE_DATA', offline=offline)
-    modpath = pkg_resources.resource_filename('mirage', '')
+    modpath = str(resources.files('mirage'))
 
     config_info = {}
 

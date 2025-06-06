@@ -11,13 +11,13 @@ Use
     >>> pytest
 """
 from astropy.table import Table
+import importlib.resources as resources
 import numpy as np
 import os
-import pkg_resources
 
 from mirage.utils import flux_cal
 
-package_path = pkg_resources.resource_filename('mirage', '')
+package_path = str(resources.files('mirage'))
 CONFIG_DIR = os.path.join(package_path, 'config')
 
 

@@ -12,16 +12,16 @@ Use
 """
 import astropy.units as u
 import datetime
+import importlib.resources as resources
 from jwst_backgrounds import jbt
 import numpy as np
 import os
-import pkg_resources
 import pysiaf
 
 from mirage.utils import backgrounds, file_io
 from mirage.utils.constants import MEAN_GAIN_VALUES
 
-package_path = pkg_resources.resource_filename('mirage', '')
+package_path = str(resources.files('mirage'))
 CONFIG_DIR = os.path.join(package_path, 'config')
 
 

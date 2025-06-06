@@ -50,6 +50,7 @@ import os
 import sys
 import argparse
 import datetime
+import importlib.resources as resources
 import logging
 import yaml
 
@@ -59,7 +60,6 @@ from astropy.units.quantity import Quantity
 import batman
 import numpy as np
 from NIRCAM_Gsim.grism_seed_disperser import Grism_seed
-import pkg_resources
 import pysiaf
 from scipy.interpolate import interp1d, interp2d
 
@@ -162,7 +162,7 @@ class GrismTSO():
                               "input files needed for the simulation."
                               "These files must be downloaded separately"
                               "from the Mirage package.".format(env_var)))
-        self.modpath = pkg_resources.resource_filename('mirage', '')
+        self.modpath = str(resources.files('mirage'))
 
         # Set the user-input parameters
         self.paramfile = parameter_file

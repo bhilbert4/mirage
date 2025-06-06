@@ -11,6 +11,7 @@ import argparse
 import datetime
 import sys
 import glob
+import importlib.resources as resources
 import logging
 import os
 import copy
@@ -22,7 +23,6 @@ from yaml.scanner import ScannerError
 import math
 import yaml
 import time
-import pkg_resources
 import asdf
 import scipy.signal as s1
 import scipy.special as sp
@@ -102,7 +102,7 @@ class Catalog_seed():
 
         # Locate the module files, so that we know where to look
         # for config subdirectory
-        self.modpath = pkg_resources.resource_filename('mirage', '')
+        self.modpath = str(resources.files('mirage'))
 
         # Get the location of the MIRAGE_DATA environment
         # variable, so we know where to look for darks, CR,

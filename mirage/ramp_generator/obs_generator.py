@@ -33,6 +33,7 @@ import random
 import copy
 from math import radians
 import datetime
+import importlib.resources as resources
 import logging
 import warnings
 import argparse
@@ -40,7 +41,6 @@ import shutil
 
 import asdf
 import yaml
-import pkg_resources
 import numpy as np
 from astropy.io import fits, ascii
 from astropy.table import Table
@@ -102,7 +102,7 @@ class Observation():
 
         # Locate the module files, so that we know where to look
         # for config subdirectory
-        self.modpath = pkg_resources.resource_filename('mirage', '')
+        self.modpath = str(resources.files('mirage'))
 
         # Get the location of the MIRAGE_DATA environment
         # variable, so we know where to look for darks, CR,

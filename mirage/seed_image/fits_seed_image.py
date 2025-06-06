@@ -120,7 +120,7 @@ import argparse
 import copy
 import logging
 import os
-import pkg_resources
+import importlib.resources as resources
 import sys
 
 from astropy.io import fits, ascii
@@ -262,7 +262,7 @@ class ImgSeed:
 
         # Locate the module files, so that we know where to look
         # for config subdirectory
-        self.modpath = pkg_resources.resource_filename('mirage', '')
+        self.modpath = str(resources.files('mirage'))
 
         # self.coords contains the factor by which the
         # nominal output array size needs to be increased

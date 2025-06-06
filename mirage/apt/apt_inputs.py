@@ -41,10 +41,10 @@ October 2018 - Major modifications to read programs of all science instruments a
 '''
 import copy
 import os
+import importlib.resources as resources
 import logging
 import re
 import argparse
-import pkg_resources
 import warnings
 
 from astropy.table import Table, vstack
@@ -91,7 +91,7 @@ class AptInput:
 
         # Locate the module files, so that we know where to look
         # for config subdirectory
-        self.config_path = os.path.join(pkg_resources.resource_filename('mirage', ''), 'config')
+        self.config_path = os.path.join(str(resources.files('mirage')), 'config')
 
     def add_epochs(self, intab):
         """NOT CURRENTLY USED"""
